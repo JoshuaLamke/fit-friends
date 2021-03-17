@@ -10,14 +10,16 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         ZStack{
+            //assign color gradient to background
             LinearGradient(gradient: .init(colors: [Color("Color"),Color("Color2"),Color("Color3")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
-//            LinearGradient(gradient: .init(colors: [Color("Color4")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
+            //fill up display if height > 800
             if UIScreen.main.bounds.height > 800 {
-                loginPage()
+                mainPage()
             }
             else {
+                //create a scroll view of display
                 ScrollView(.vertical, showsIndicators: false){
-                    loginPage()
+                    mainPage()
                 }
             }
             
@@ -31,16 +33,21 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-struct loginPage : View {
+struct mainPage : View {
+    //variable to hold state of existing or new
     @State var index = 0;
+    
     var body :some View{
         VStack {
-            
+            //FitFriends logo
             Image("Logo")
                 .resizable()
                 .frame(width: 200, height:180)
             
+            //horizontal stack holding and new buttons
             HStack{
+                
+                //existing button
                 Button(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
                     self.index = 0
@@ -56,6 +63,7 @@ struct loginPage : View {
                 }.background(self.index == 0 ? Color.white: Color.clear)
                 .clipShape(Capsule())
                 
+                //new button
                 Button(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
                     self.index = 1
@@ -70,14 +78,15 @@ struct loginPage : View {
                     
                 }.background(self.index == 1 ? Color.white: Color.clear)
                 .clipShape(Capsule())
-            }.background(Color.black.opacity(0.1))
+            }
+            .background(Color.black.opacity(0.1))
             .clipShape(Capsule())
             .padding(.top, 25)
             
+            //if index == 0 then the login page is currently viewed, therefore display forgot password button. Else if index == 1 then the register page is currently viewed, therefore forgot password button isn't needed.
             if self.index == 0{
                 Login()
                 Button(action: {
-                    
                 }) {
                     Text("Forgot Password?")
                         .foregroundColor(.white)
@@ -93,31 +102,31 @@ struct loginPage : View {
 
 struct Login : View {
     
-    @State var mail = ""
+    //variables to hold email and password
+    @State var email = ""
     @State var pass = ""
     
     var body : some View{
         VStack{
             //vertical stack holding all inputs
             VStack{
-                //email address horizontal stack
+                //horizontal stack holding email address
                 HStack(spacing: 15){
                     Image(systemName: "envelope")
                         .resizable()
                         .frame(width:16, height: 13)
                         .foregroundColor(.black)
-                    TextField("Email Address", text: self.$mail)
+                    TextField("Email Address", text: self.$email)
                 }.padding(.vertical, 20)
                 
-                //divide email and pass
                 Divider()
                 
+                //horizontal stack holding password
                 HStack(spacing: 15){
                     Image(systemName: "lock")
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    
                     SecureField("Password", text: self.$pass)
             
                     Button(action: {
@@ -125,12 +134,11 @@ struct Login : View {
                         Image(systemName: "eye")
                             .foregroundColor(.black)
                     }
-                    
                 }.padding(.vertical, 20)
-                //divide email and login
+                
                 Divider()
             }
-            //add padding around username and password
+            //add padding around vertical stack holding email and password
             .padding(.vertical)
             .padding(.horizontal,20)
             .padding(.bottom,40)
@@ -138,17 +146,15 @@ struct Login : View {
             .cornerRadius(10)
             .padding(.top,25)
             
+            //button for login
             Button(action: {
-                
             }){
                 Text("LOGIN")
                     .foregroundColor(.white)
                     .fontWeight(.bold)
                     .padding(.vertical)
                     .frame(width: UIScreen.main.bounds.width - 100)
-                
-//            }.background (LinearGradient(gradient: .init(colors: [Color("Color2"),Color("Color1"),Color("Color")]), startPoint: .leading, endPoint: .trailing))
-            }.background (LinearGradient(gradient: .init(colors: [Color("Color")]), startPoint: .leading, endPoint: .trailing))
+            }.background(Color.init("Color"))
             .cornerRadius(8)
             .offset(y: -40)
             .padding(.bottom,-40)
@@ -159,64 +165,59 @@ struct Login : View {
 
 struct SignUp: View {
     
-    @State var mail = ""
+    //variables to hold email,pass,retype
+    @State var email = ""
     @State var pass = ""
     @State var retypePass = ""
     
     var body : some View{
+        
         VStack{
-            
             VStack{
-                
+                //horizontal stack for email address box
                 HStack(spacing: 15){
-                    
                     Image(systemName: "envelope")
                         .resizable()
                         .frame(width:16, height:13)
                         .foregroundColor(.black)
-                    
-                    TextField("Enter Email Address", text: self.$mail)
-                    
+                    TextField("Enter Email Address", text: self.$email)
                 }.padding(.vertical, 20)
+                
                 Divider()
                 
+                //horizontal stack for password box
                 HStack(spacing: 15){
-                    
                     Image(systemName: "lock")
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    
                     SecureField("Create Password", text: self.$pass)
-                    
                     Button(action: {
                     }) {
                         Image(systemName: "eye")
                             .foregroundColor(.black)
                     }
-                    
                 }.padding(.vertical, 20)
+                
                 Divider()
                 
+                //horizontal stack for re-enter password box
                 HStack(spacing: 15){
-                    
                     Image(systemName: "lock")
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    
                     SecureField("Re-Enter Password", text: self.$retypePass)
-                    
                     Button(action: {
                     }) {
                         Image(systemName: "eye")
                             .foregroundColor(.black)
                     }
-                    
                 }.padding(.vertical, 20)
+                
                 Divider()
             }
-            //add padding around username and password
+            //add padding vertical stack holding email,pass,re-enter
             .padding(.vertical)
             .padding(.horizontal,20)
             .padding(.bottom,40)
@@ -224,17 +225,15 @@ struct SignUp: View {
             .cornerRadius(10)
             .padding(.top,25)
             
+            //button for signup
             Button(action: {
-                
             }){
                 Text("SIGNUP")
                     .foregroundColor(.white)
                     .fontWeight(.bold)
                     .padding(.vertical)
                     .frame(width: UIScreen.main.bounds.width - 100)
-                
-//            }.background (LinearGradient(gradient: .init(colors: [Color("Color2"),Color("Color1"),Color("Color")]), startPoint: .leading, endPoint: .trailing))
-            }.background (LinearGradient(gradient: .init(colors: [Color("Color")]), startPoint: .leading, endPoint: .trailing))
+            }.background(Color.init("Color"))
             .cornerRadius(8)
             .offset(y: -40)
             .padding(.bottom,-40)
