@@ -11,6 +11,7 @@ struct ContentView: View {
     var body: some View {
         ZStack{
             LinearGradient(gradient: .init(colors: [Color("Color"),Color("Color2"),Color("Color3")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
+//            LinearGradient(gradient: .init(colors: [Color("Color4")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
             loginPage()
         }
     }
@@ -61,7 +62,11 @@ struct loginPage : View {
             .clipShape(Capsule())
             .padding(.top, 25)
             
-            Login()
+            if self.index == 0{
+                Login()
+            } else {
+                SignUp()
+            }
         }
         .padding()
     }
@@ -74,29 +79,28 @@ struct Login : View {
     
     var body : some View{
         VStack{
-            
+            //vertical stack holding all inputs
             VStack{
-                
+                //email address horizontal stack
                 HStack(spacing: 15){
-                    
                     Image(systemName: "envelope")
+                        .resizable()
+                        .frame(width:16, height: 13)
                         .foregroundColor(.black)
-                    
-                    TextField("Enter Email Address", text: self.$mail)
-                    
+                    TextField("Email Address", text: self.$mail)
                 }.padding(.vertical, 20)
                 
+                //divide email and pass
                 Divider()
                 
                 HStack(spacing: 15){
-                    
                     Image(systemName: "lock")
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
                     
-                    SecureField("Enter Password", text: self.$pass)
-                    
+                    SecureField("Password", text: self.$pass)
+            
                     Button(action: {
                     }) {
                         Image(systemName: "eye")
@@ -104,6 +108,8 @@ struct Login : View {
                     }
                     
                 }.padding(.vertical, 20)
+                //divide email and login
+                Divider()
             }
             //add padding around username and password
             .padding(.vertical)
@@ -122,8 +128,94 @@ struct Login : View {
                     .padding(.vertical)
                     .frame(width: UIScreen.main.bounds.width - 100)
                 
-            }.background (LinearGradient(gradient: .init(colors: [Color("Color2"),Color("Color1"),Color("Color")]), startPoint: .leading, endPoint: .trailing))
-//            }.background (LinearGradient(gradient: .init(colors: [Color("Color2")]), startPoint: .leading, endPoint: .trailing))
+//            }.background (LinearGradient(gradient: .init(colors: [Color("Color2"),Color("Color1"),Color("Color")]), startPoint: .leading, endPoint: .trailing))
+            }.background (LinearGradient(gradient: .init(colors: [Color("Color")]), startPoint: .leading, endPoint: .trailing))
+            .cornerRadius(8)
+            .offset(y: -40)
+            .padding(.bottom,-40)
+            .shadow(radius: 25)
+        }
+    }
+}
+
+struct SignUp: View {
+    
+    @State var mail = ""
+    @State var pass = ""
+    @State var retypePass = ""
+    
+    var body : some View{
+        VStack{
+            
+            VStack{
+                
+                HStack(spacing: 15){
+                    
+                    Image(systemName: "envelope")
+                        .resizable()
+                        .frame(width:16, height:13)
+                        .foregroundColor(.black)
+                    
+                    TextField("Enter Email Address", text: self.$mail)
+                    
+                }.padding(.vertical, 20)
+                Divider()
+                
+                HStack(spacing: 15){
+                    
+                    Image(systemName: "lock")
+                        .resizable()
+                        .frame(width:15, height:18)
+                        .foregroundColor(.black)
+                    
+                    SecureField("Create Password", text: self.$pass)
+                    
+                    Button(action: {
+                    }) {
+                        Image(systemName: "eye")
+                            .foregroundColor(.black)
+                    }
+                    
+                }.padding(.vertical, 20)
+                Divider()
+                
+                HStack(spacing: 15){
+                    
+                    Image(systemName: "lock")
+                        .resizable()
+                        .frame(width:15, height:18)
+                        .foregroundColor(.black)
+                    
+                    SecureField("Re-Enter Password", text: self.$retypePass)
+                    
+                    Button(action: {
+                    }) {
+                        Image(systemName: "eye")
+                            .foregroundColor(.black)
+                    }
+                    
+                }.padding(.vertical, 20)
+                Divider()
+            }
+            //add padding around username and password
+            .padding(.vertical)
+            .padding(.horizontal,20)
+            .padding(.bottom,40)
+            .background(Color.white)
+            .cornerRadius(10)
+            .padding(.top,25)
+            
+            Button(action: {
+                
+            }){
+                Text("SIGNUP")
+                    .foregroundColor(.white)
+                    .fontWeight(.bold)
+                    .padding(.vertical)
+                    .frame(width: UIScreen.main.bounds.width - 100)
+                
+//            }.background (LinearGradient(gradient: .init(colors: [Color("Color2"),Color("Color1"),Color("Color")]), startPoint: .leading, endPoint: .trailing))
+            }.background (LinearGradient(gradient: .init(colors: [Color("Color")]), startPoint: .leading, endPoint: .trailing))
             .cornerRadius(8)
             .offset(y: -40)
             .padding(.bottom,-40)
