@@ -34,8 +34,10 @@ struct loginPage : View {
             
             HStack{
                 Button(action: {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
                     self.index = 0
-                    
+                    }
+
                 }) {
                     Text("Existing")
                         .foregroundColor(self.index == 0 ? .black : .white)
@@ -47,7 +49,9 @@ struct loginPage : View {
                 .clipShape(Capsule())
                 
                 Button(action: {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
                     self.index = 1
+                    }
                     
                 }) {
                     Text("New")
@@ -67,6 +71,24 @@ struct loginPage : View {
             } else {
                 SignUp()
             }
+            
+            Button(action: {
+                
+            }) {
+                Text("Forgot Password")
+                    .foregroundColor(.white)
+            }
+            .padding(.top,20)
+            HStack(spacing: 15) {
+                
+                Color.white.opacity(0.7)
+                    .frame(width: 35, height: 1)
+                Text("Or")
+                    .foregroundColor(.white)
+                Color.white.opacity(0.7)
+                    .frame(width: 35, height: 1)
+            }
+            .padding(.top,10)
         }
         .padding()
     }
