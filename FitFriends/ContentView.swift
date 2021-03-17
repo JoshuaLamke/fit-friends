@@ -12,7 +12,15 @@ struct ContentView: View {
         ZStack{
             LinearGradient(gradient: .init(colors: [Color("Color"),Color("Color2"),Color("Color3")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
 //            LinearGradient(gradient: .init(colors: [Color("Color4")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
-            loginPage()
+            if UIScreen.main.bounds.height > 800 {
+                loginPage()
+            }
+            else {
+                ScrollView(.vertical, showsIndicators: false){
+                    loginPage()
+                }
+            }
+            
         }
     }
 }
@@ -68,27 +76,16 @@ struct loginPage : View {
             
             if self.index == 0{
                 Login()
+                Button(action: {
+                    
+                }) {
+                    Text("Forgot Password?")
+                        .foregroundColor(.white)
+                }
+                .padding(.top,20)
             } else {
                 SignUp()
             }
-            
-            Button(action: {
-                
-            }) {
-                Text("Forgot Password")
-                    .foregroundColor(.white)
-            }
-            .padding(.top,20)
-            HStack(spacing: 15) {
-                
-                Color.white.opacity(0.7)
-                    .frame(width: 35, height: 1)
-                Text("Or")
-                    .foregroundColor(.white)
-                Color.white.opacity(0.7)
-                    .frame(width: 35, height: 1)
-            }
-            .padding(.top,10)
         }
         .padding()
     }
