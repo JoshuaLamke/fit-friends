@@ -14,13 +14,19 @@ var url2 = "https://fit-friends.herokuapp.com/api/user/signup"
 var params2 = ["name": "", "email": "", "password": ""]
 
 
-//Sample Values these will come from the text field
+//Sample Values these will come from the text field.
+//NEED TO BE CHANGED
 var userNameInput = "Tyler3"
 var userEmailInput = "tyl3@gmail.com"
 var passWordInput = "abcdefG1"
 
+//This is important, it identifies the user in the database for when we add stuff later
+var token = ""
+
 //boolean just to turn functions on and off for testing
+//add these to the if statements if you want to test them one at a time
 var testPost = false
+var testSign = false
 
 //---------------------------------------------------------------------------
 //Check if username is in right format
@@ -80,7 +86,7 @@ func isValidPassword(_ password: String) -> Int {
 
 //Login Request
 //Only runs if the entered email and password are valid
-if ( isValidEmail(userEmailInput) && isValidPassword(passWordInput) == 0 && testPost == true)
+if ( isValidEmail(userEmailInput) && isValidPassword(passWordInput) == 0)
 {
     print("Valid Email & Password will now attempt to 'login'")
     
@@ -105,14 +111,20 @@ if ( isValidEmail(userEmailInput) && isValidPassword(passWordInput) == 0 && test
                     //On success prints corresponding values
                     if (response.response?.statusCode == 201)
                     {
+                        //If it reaches this point the user is succesfully logged in
+                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
                         print(json["message"])
                         print(json["data"]["name"])
                         print(json["data"]["email"])
                         print(json["data"]["password"])
+                        //IMPORTANT identifies user for later use
+                        token = json["token"].rawString() ?? ""
+                        
+                        //You can send them to the user page at this point
                     }
                     else
                     {
-                        //prints string attached to message
+                        //prints string attached to message such as no user found
                         print(json["error"])
                     }
                 }
@@ -166,14 +178,20 @@ if (isValidUserName(userNameInput) && isValidEmail(userEmailInput) && isValidPas
                     //On success prints corresponding values
                     if (response.response?.statusCode == 201)
                     {
+                        //If it reaches this, the user is succesfully signed up
+                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
                         print(json["message"])
                         print(json["data"]["username"])
                         print(json["data"]["email"])
                         print(json["data"]["password"])
+                        //IMPORTANT we need this for later
+                        token = json["token"].rawString() ?? ""
+                        
+                        //They should be signed up and sent to login at this point
                     }
                     else
                     {
-                        //prints string attached to message
+                        //prints string attached to message such as user already exists
                         print(json["error"]["detail"])
                     }
                 }
