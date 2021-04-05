@@ -7,6 +7,8 @@
 
 import SwiftUI
 import Alamofire
+import SwiftyJSON
+import Foundation
 
 struct ContentView: View {
     var body: some View {
@@ -156,16 +158,17 @@ struct Login : View {
             
             //button for login
             Button(action: {
-                if user != "" && pass != "" {
-                    if(!isValidUserName(user)){
-                        print("is not a valid username")
-                    }
-                    withAnimation{
-                        loading.toggle()
-                    }
-                } else {
-                    
-                }
+//                if user != "" && pass != "" {
+//                    if(!isValidUserName(user)){
+//                        print("is not a valid username")
+//                    }
+//                    withAnimation{
+//                        loading.toggle()
+//                    }
+//                } else {
+//
+//                }
+                tryLogin(self.user, self.pass)
             }){
                 Text("LOGIN")
                     .foregroundColor(.white)
@@ -276,6 +279,7 @@ struct SignUp: View {
             //button for signup
             Button(action: {
                 checkInputs()
+                trySignUp(self.user, self.email, self.pass, self.retypePass)
             }){
                 Text("SIGNUP")
                     .foregroundColor(.white)
@@ -459,138 +463,189 @@ func isValidPassword(_ password: String) -> Int {
     }
 }
 
-//---------------------------------------------------------------------------
-//Login Request
-//Only runs if the entered email and password are valid
-//if ( isValidEmail(userEmailInput) && isValidPassword(passWordInput) == 0)
-//{
-//    print("Valid Email & Password will now attempt to 'login'")
-//
-//    //sets the value in param
-//    params["email"] = userEmailInput
-//    params["password"] = passWordInput
-//
-//    //Requests at (fitfriends, POST, data to go in, JSON format)
-//    AF.request(url, method: .post, parameters: params, encoding: JSONEncoding.default) .responseJSON
-//    { response in
-//        //Loads into switch
-//        switch response.result {
-//        //If succesfully reaches site
-//        case .success(_):
-//
-//            //shortens to data
-//            if let data = response.data
-//            {
-//                //shortens to json
-//                if let json = try? JSON(data: data)
-//                {
-//                    //On success prints corresponding values
-//                    if (response.response?.statusCode == 201)
-//                    {
-//                        //If it reaches this point the user is succesfully logged in
-//                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
-//                        print(json["message"])
-//                        print(json["data"]["name"])
-//                        print(json["data"]["email"])
-//                        print(json["data"]["password"])
-//                        //IMPORTANT identifies user for later use
-//                        token = json["token"].rawString() ?? ""
-//
-//                        //You can send them to the user page at this point
-//                    }
-//                    else
-//                    {
-//                        //prints string attached to message such as no user found
-//                        print(json["error"])
-//                    }
-//                }
-//            }
-//            break
-//        case .failure(_):
-//            print("INVALID URL")
-//            break
-//        }
-//    }
-//}
-//else if (!isValidEmail(userEmailInput))
-//{
-//    print("Invalid Email")
-//}
-//else if (isValidPassword(passWordInput) == 1)
-//{
-//    print("Password must be 6 to 21 inches long")
-//}
-//else if (isValidPassword(passWordInput) == 2)
-//{
-//    print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
-//}
-//
+func tryLogin(_ email: String, _ password: String){
+    //---------------------------------------------------------------------------
+    //Login Request
+    //Only runs if the entered email and password are valid
+    var url = "https://fit-friends.herokuapp.com/api/user/login"
+    //Parameters to input
+    var params = ["email": "", "password": ""]
+
+
+    //Sample Values these will come from the text field.
+    //NEED TO BE CHANGED
+    //var userNameInput = "Tyler3"
+    //var userEmailInput = "tyl3@gmail.com"
+    //var passWordInput = "abcdefG1"
+
+    //This is important, it identifies the user in the database for when we add stuff later
+    var token = ""
+
+    //boolean just to turn functions on and off for testing
+    //add these to the if statements if you want to test them one at a time
+    var testPost = false
+    var testSign = false
+    
+    if ( isValidEmail(email) && isValidPassword(password) == 0)
+    {
+        print("Valid Email & Password will now attempt to 'login'")
+    
+        //sets the value in param
+        params["email"] = email
+        params["password"] = password
+    
+        //Requests at (fitfriends, POST, data to go in, JSON format)
+        AF.request(url, method: .post, parameters: params, encoding: JSONEncoding.default) .responseJSON
+        { response in
+            //Loads into switch
+            switch response.result {
+            //If succesfully reaches site
+            case .success(_):
+    
+                //shortens to data
+                if let data = response.data
+                {
+                    //shortens to json
+                    if let json = try? JSON(data: data)
+                    {
+                        //On success prints corresponding values
+                        if (response.response?.statusCode == 201)
+                        {
+                            //If it reaches this point the user is succesfully logged in
+                            //You probably won't need this but its usefull to see if everything is working as it prints in the console
+                            print(json["message"])
+                            print(json["data"]["name"])
+                            print(json["data"]["email"])
+                            print(json["data"]["password"])
+                            //IMPORTANT identifies user for later use
+                            token = json["token"].rawString() ?? ""
+    
+                            //You can send them to the user page at this point
+                        }
+                        else
+                        {
+                            //prints string attached to message such as no user found
+                            print(json["error"])
+                        }
+                    }
+                }
+                break
+            case .failure(_):
+                print("INVALID URL")
+                break
+            }
+        }
+    }
+    else if (!isValidEmail(email))
+    {
+        print("Invalid Email")
+    }
+    else if (isValidPassword(password) == 1)
+    {
+        print("Password must be 6 to 21 inches long")
+    }
+    else if (isValidPassword(password) == 2)
+    {
+        print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
+    }
+    
+}
+
+func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnterPass: String){
+
+    //URL with endpoint to sent to
+    var url2 = "https://fit-friends.herokuapp.com/api/user/signup"
+    //Parameters to input
+    var params2 = ["name": "", "email": "", "password": ""]
+
+
+    //Sample Values these will come from the text field.
+    //NEED TO BE CHANGED
+    //var userNameInput = "Tyler3"
+    //var userEmailInput = "tyl3@gmail.com"
+    //var passWordInput = "abcdefG1"
+
+    //This is important, it identifies the user in the database for when we add stuff later
+    var token = ""
+
+    //boolean just to turn functions on and off for testing
+    //add these to the if statements if you want to test them one at a time
+    //var testPost = false
+    //var testSign = false
 ////-------------------------------------------------------------------------------
 ////Signup Request
 ////Only runs if the entered name, email, and password are valid
-//if (isValidUserName(userNameInput) && isValidEmail(userEmailInput) && isValidPassword(passWordInput) == 0)
-//{
-//    print("Valid Email & Password will now attempt to 'signup'")
-//    //sets the value in param
-//    params2["name"] = userNameInput
-//    params2["email"] = userEmailInput
-//    params2["password"] = passWordInput
-//
-//    //Requests at (fitfriends, POST, data to go in, JSON format)
-//    AF.request(url2, method: .post, parameters: params2, encoding: JSONEncoding.default) .responseJSON
-//    { response in
-//        //Loads into switch
-//        switch response.result {
-//        //If succesfully reaches site
-//        case .success(_):
-//
-//            //shortens to data
-//            if let data = response.data
-//            {
-//                //shortens to json
-//                if let json = try? JSON(data: data)
-//                {
-//                    //On success prints corresponding values
-//                    if (response.response?.statusCode == 201)
-//                    {
-//                        //If it reaches this, the user is succesfully signed up
-//                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
-//                        print(json["message"])
-//                        print(json["data"]["username"])
-//                        print(json["data"]["email"])
-//                        print(json["data"]["password"])
-//                        //IMPORTANT we need this for later
-//                        token = json["token"].rawString() ?? ""
-//
-//                        //They should be signed up and sent to login at this point
-//                    }
-//                    else
-//                    {
-//                        //prints string attached to message such as user already exists
-//                        print(json["error"]["detail"])
-//                    }
-//                }
-//            }
-//            break
-//        case .failure(_):
-//            print("INVALID URL")
-//            break
-//        }
-//    }
-//}
-//else if (isValidUserName(userNameInput))
+    if (isValidUserName(username) && isValidEmail(email) && isValidPassword(password) == 0)
+    {
+    print("Valid Email & Password will now attempt to 'signup'")
+    //sets the value in param
+    params2["name"] = username
+    params2["email"] = email
+    params2["password"] = password
+
+    //Requests at (fitfriends, POST, data to go in, JSON format)
+    AF.request(url2, method: .post, parameters: params2, encoding: JSONEncoding.default) .responseJSON
+    { response in
+        //Loads into switch
+        switch response.result {
+        //If succesfully reaches site
+        case .success(_):
+
+            //shortens to data
+            if let data = response.data
+            {
+                //shortens to json
+                if let json = try? JSON(data: data)
+                {
+                    //On success prints corresponding values
+                    if (response.response?.statusCode == 201)
+                    {
+                        //If it reaches this, the user is succesfully signed up
+                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
+                        print(json["message"])
+                        print(json["data"]["username"])
+                        print(json["data"]["email"])
+                        print(json["data"]["password"])
+                        //IMPORTANT we need this for later
+                        token = json["token"].rawString() ?? ""
+
+                        //They should be signed up and sent to login at this point
+                    }
+                    else
+                    {
+                        //prints string attached to message such as user already exists
+                        print(json["error"]["detail"])
+                    }
+                }
+            }
+            break
+        case .failure(_):
+            print("INVALID URL")
+            break
+        }
+    }
+    }
+}
+
+
+
+
+
+
+//else if (isValidUserName(username))
 //{
 //    print("Username must be shorter than 21 characters")
 //}
-//else if (!isValidEmail(userEmailInput))
+//else if (!isValidEmail(email))
 //{
 //    print("Invalid Email")
 //}
-//else if (isValidPassword(passWordInput) == 1)
+//else if (isValidPassword(password) == 1)
 //{
 //    print("Password must be 6 to 21 inches long")
 //}
-//else if (isValidPassword(passWordInput) == 2)
+//else if (isValidPassword(password) == 2)
 //{
 //    print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
 //}
+
