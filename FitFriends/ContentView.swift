@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+import Alamofire
+import SwiftyJSON
+import Foundation
 
 struct ContentView: View {
     var body: some View {
@@ -103,8 +106,10 @@ struct mainPage : View {
 struct Login : View {
     
     //variables to hold email and password
-    @State var email = ""
+    @State var user = ""
     @State var pass = ""
+    @State var visible = false
+    @State var loading = false
     
     var body : some View{
         VStack{
@@ -112,11 +117,11 @@ struct Login : View {
             VStack{
                 //horizontal stack holding email address
                 HStack(spacing: 15){
-                    Image(systemName: "envelope")
+                    Image(systemName: "person")
                         .resizable()
                         .frame(width:16, height: 13)
                         .foregroundColor(.black)
-                    TextField("Email Address", text: self.$email)
+                    TextField("Email Address or Username", text: self.$user)
                 }.padding(.vertical, 20)
                 
                 Divider()
@@ -127,11 +132,16 @@ struct Login : View {
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    SecureField("Password", text: self.$pass)
+                    if self.visible{
+                        TextField("Password", text: self.$pass)
+                    } else {
+                        SecureField("Password", text: self.$pass)
+                    }
             
                     Button(action: {
+                        self.visible.toggle()
                     }) {
-                        Image(systemName: "eye")
+                        Image(systemName: self.visible ? "eye" : "eye.slash")
                             .foregroundColor(.black)
                     }
                 }.padding(.vertical, 20)
@@ -148,6 +158,17 @@ struct Login : View {
             
             //button for login
             Button(action: {
+//                if user != "" && pass != "" {
+//                    if(!isValidUserName(user)){
+//                        print("is not a valid username")
+//                    }
+//                    withAnimation{
+//                        loading.toggle()
+//                    }
+//                } else {
+//
+//                }
+                tryLogin(self.user, self.pass)
             }){
                 Text("LOGIN")
                     .foregroundColor(.white)
@@ -159,21 +180,41 @@ struct Login : View {
             .offset(y: -40)
             .padding(.bottom,-40)
             .shadow(radius: 25)
+            
+            if loading {
+                //LoadView(placeHolder: "Logging In", show: $loading)
+            }
         }
+        .edgesIgnoringSafeArea(.all)
     }
 }
 
 struct SignUp: View {
     
     //variables to hold email,pass,retype
+    @State var user = ""
     @State var email = ""
     @State var pass = ""
     @State var retypePass = ""
+    @State var visible1 = false;
+    @State var visible2 = false;
+    @State var alert = false
+    @State var error = ""
     
     var body : some View{
-        
-        VStack{
+        ZStack{
             VStack{
+                VStack{
+                //horizontal stack for email address box
+                HStack(spacing: 15){
+                    Image(systemName: "person")
+                        .resizable()
+                        .frame(width:16, height:13)
+                        .foregroundColor(.black)
+                    TextField("Enter Username", text: self.$user)
+                }.padding(.vertical, 10)
+                
+                Divider()
                 //horizontal stack for email address box
                 HStack(spacing: 15){
                     Image(systemName: "envelope")
@@ -181,7 +222,7 @@ struct SignUp: View {
                         .frame(width:16, height:13)
                         .foregroundColor(.black)
                     TextField("Enter Email Address", text: self.$email)
-                }.padding(.vertical, 20)
+                }.padding(.vertical, 10)
                 
                 Divider()
                 
@@ -191,13 +232,18 @@ struct SignUp: View {
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    SecureField("Create Password", text: self.$pass)
+                    if self.visible1{
+                        TextField("Password", text: self.$pass)
+                    } else {
+                        SecureField("Password", text: self.$pass)
+                    }
                     Button(action: {
+                        self.visible1.toggle()
                     }) {
-                        Image(systemName: "eye")
+                        Image(systemName: self.visible1 ? "eye" : "eye.slash")
                             .foregroundColor(.black)
                     }
-                }.padding(.vertical, 20)
+                }.padding(.vertical, 10)
                 
                 Divider()
                 
@@ -207,13 +253,18 @@ struct SignUp: View {
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    SecureField("Re-Enter Password", text: self.$retypePass)
+                    if self.visible2{
+                        TextField("Re-Enter Password", text: self.$retypePass)
+                    } else {
+                        SecureField("Re-Enter Password", text: self.$retypePass)
+                    }
                     Button(action: {
+                        self.visible2.toggle()
                     }) {
-                        Image(systemName: "eye")
+                        Image(systemName: self.visible2 ? "eye" : "eye.slash")
                             .foregroundColor(.black)
                     }
-                }.padding(.vertical, 20)
+                }.padding(.vertical, 10)
                 
                 Divider()
             }
@@ -227,6 +278,8 @@ struct SignUp: View {
             
             //button for signup
             Button(action: {
+                checkInputs()
+                trySignUp(self.user, self.email, self.pass, self.retypePass)
             }){
                 Text("SIGNUP")
                     .foregroundColor(.white)
@@ -238,6 +291,361 @@ struct SignUp: View {
             .offset(y: -40)
             .padding(.bottom,-40)
             .shadow(radius: 25)
+            }
+            if self.alert{
+                //ViewError(alert: self.$alert, error: self.$error)
+            }
+        }
+    }
+    func checkInputs(){
+        if self.user != "" && self.email != "" &&  self.pass != "" && self.retypePass != "" {
+            if(!isValidUserName(self.user)){
+                print("Not valid username")
+            } else if (!isValidEmail(self.email)){
+                print("Not valid email")
+            } else if (isValidPassword(self.pass)==0){
+                print("valid password")
+            } else if (isValidPassword(self.pass)==1){
+                print("Not a valid length for password")
+            } else if(isValidPassword(self.pass)==2){
+                print("password must contain blabla")
+            }
+        } else {
+            self.error = "Please fill in all blanks in order to register."
+            self.alert.toggle()
         }
     }
 }
+
+//struct ViewError : View {
+//    @State var color = Color.black.opacity(0.75)
+//    @Binding var alert : Bool
+//    @Binding var error : String
+//
+//    var body: some View {
+//        GeometryReader{_ in
+//            VStack {
+//                HStack{
+//                    Text("Error")
+//                        .font(.title)
+//                        .fontWeight(.bold)
+//                        .foregroundColor(self.color)
+//
+//                    Spacer()
+//                }
+//                .padding(.horizontal, 25)
+//
+//                Text(self.error)
+//                    .foregroundColor(self.color)
+//                    .padding(.top)
+//                    .padding(.horizontal,25)
+//                Button(action: {
+//                    self.alert.toggle()
+//                }) {
+//                    Text("Cancel")
+//                        .foregroundColor(.white)
+//                        .padding(.vertical)
+//                        .frame(width: UIScreen.main.bounds.width - 120)
+//                }
+//                .background(Color("Color"))
+//                .cornerRadius(10)
+//                .padding(.top, 25)
+//
+//            }
+//            .padding(.vertical,25)
+//            .frame(width: UIScreen.main.bounds.width - 30)
+//            .background(Color.white)
+//            .cornerRadius(15)
+//
+//        }
+//        //.frame(width: 100, height: 100)
+//        .background(Color.black.opacity(0.20).edgesIgnoringSafeArea(.all))
+//    }
+//}
+
+//struct LoadView : View {
+//    var placeHolder : String
+//    @Binding var show : Bool
+//    @State var animate = false
+//    var body : some View {
+//
+//        VStack(spacing: 28) {
+//            Circle()
+//                .stroke(AngularGradient(gradient: .init(colors:[Color.primary,Color.primary.opacity(0)]), center: .center))
+//                .frame(width: 80, height: 80)
+//                .rotationEffect(.init(degrees: animate ? 360 : 0))
+//            Text(placeHolder)
+//                .fontWeight(.bold)
+//
+//        }
+//        .padding(.vertical,25)
+//        .padding(.horizontal,35)
+//        .background(BlurView())
+//        .cornerRadius(20)
+//        .frame(maxWidth: .infinity, maxHeight: .infinity)
+//        .background(
+//            Color.primary.opacity(0.35).onTapGesture {
+//                withAnimation{
+//                    show.toggle()
+//                }
+//            }
+//        )
+//        .onAppear{
+//            withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)){
+//                animate.toggle()
+//            }
+//
+//        }
+//    }
+//}
+
+//struct BlurView: UIViewRepresentable {
+//    func makeUIView(context: Context) -> UIVisualEffectView {
+//        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
+//        return view
+//    }
+//
+//    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+//
+//    }
+//}
+//---------------------------------------------------------------------------
+//Check if username is in right format
+func isValidUserName(_ name: String) -> Bool {
+    if (name.count <= 21)
+    {
+        return true
+    }
+    return false
+}
+
+//Check if email is in right format
+func isValidEmail(_ email: String) -> Bool {
+    let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+
+    let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
+    return emailPred.evaluate(with: email)
+}
+
+//Check if password is in right format
+func isValidPassword(_ password: String) -> Int {
+    
+    //Password is of valid length
+    if (password.count >= 6 && password.count < 21)
+    {
+        //Checks if there is a capital letter
+        let capitalLetterRegEx  = ".*[A-Z]+.*"
+        let texttest = NSPredicate(format:"SELF MATCHES %@", capitalLetterRegEx)
+        guard texttest.evaluate(with: password) else
+        {
+            return 2
+        }
+        //Checks if there is a lowercase letter
+        let lowerLetterRegEx  = ".*[a-z]+.*"
+        let texttest2 = NSPredicate(format:"SELF MATCHES %@", lowerLetterRegEx)
+        guard texttest2.evaluate(with: password) else
+        {
+            return 2
+        }
+        //Checks if there is a number
+        let numberRegEx  = ".*[0-9]+.*"
+        let texttest1 = NSPredicate(format:"SELF MATCHES %@", numberRegEx)
+        guard texttest1.evaluate(with: password) else
+        {
+            return 2
+        }
+
+        return 0
+    }
+    else
+    {
+        return 1
+    }
+}
+
+func tryLogin(_ email: String, _ password: String){
+    //---------------------------------------------------------------------------
+    //Login Request
+    //Only runs if the entered email and password are valid
+    var url = "https://fit-friends.herokuapp.com/api/user/login"
+    //Parameters to input
+    var params = ["email": "", "password": ""]
+
+
+    //Sample Values these will come from the text field.
+    //NEED TO BE CHANGED
+    //var userNameInput = "Tyler3"
+    //var userEmailInput = "tyl3@gmail.com"
+    //var passWordInput = "abcdefG1"
+
+    //This is important, it identifies the user in the database for when we add stuff later
+    var token = ""
+
+    //boolean just to turn functions on and off for testing
+    //add these to the if statements if you want to test them one at a time
+    var testPost = false
+    var testSign = false
+    
+    if ( isValidEmail(email) && isValidPassword(password) == 0)
+    {
+        print("Valid Email & Password will now attempt to 'login'")
+    
+        //sets the value in param
+        params["email"] = email
+        params["password"] = password
+    
+        //Requests at (fitfriends, POST, data to go in, JSON format)
+        AF.request(url, method: .post, parameters: params, encoding: JSONEncoding.default) .responseJSON
+        { response in
+            //Loads into switch
+            switch response.result {
+            //If succesfully reaches site
+            case .success(_):
+    
+                //shortens to data
+                if let data = response.data
+                {
+                    //shortens to json
+                    if let json = try? JSON(data: data)
+                    {
+                        //On success prints corresponding values
+                        if (response.response?.statusCode == 201)
+                        {
+                            //If it reaches this point the user is succesfully logged in
+                            //You probably won't need this but its usefull to see if everything is working as it prints in the console
+                            print(json["message"])
+                            print(json["data"]["name"])
+                            print(json["data"]["email"])
+                            print(json["data"]["password"])
+                            //IMPORTANT identifies user for later use
+                            token = json["token"].rawString() ?? ""
+    
+                            //You can send them to the user page at this point
+                        }
+                        else
+                        {
+                            //prints string attached to message such as no user found
+                            print(json["error"])
+                        }
+                    }
+                }
+                break
+            case .failure(_):
+                print("INVALID URL")
+                break
+            }
+        }
+    }
+    else if (!isValidEmail(email))
+    {
+        print("Invalid Email")
+    }
+    else if (isValidPassword(password) == 1)
+    {
+        print("Password must be 6 to 21 inches long")
+    }
+    else if (isValidPassword(password) == 2)
+    {
+        print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
+    }
+    
+}
+
+func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnterPass: String){
+
+    //URL with endpoint to sent to
+    var url2 = "https://fit-friends.herokuapp.com/api/user/signup"
+    //Parameters to input
+    var params2 = ["name": "", "email": "", "password": ""]
+
+
+    //Sample Values these will come from the text field.
+    //NEED TO BE CHANGED
+    //var userNameInput = "Tyler3"
+    //var userEmailInput = "tyl3@gmail.com"
+    //var passWordInput = "abcdefG1"
+
+    //This is important, it identifies the user in the database for when we add stuff later
+    var token = ""
+
+    //boolean just to turn functions on and off for testing
+    //add these to the if statements if you want to test them one at a time
+    //var testPost = false
+    //var testSign = false
+////-------------------------------------------------------------------------------
+////Signup Request
+////Only runs if the entered name, email, and password are valid
+    if (isValidUserName(username) && isValidEmail(email) && isValidPassword(password) == 0)
+    {
+    print("Valid Email & Password will now attempt to 'signup'")
+    //sets the value in param
+    params2["name"] = username
+    params2["email"] = email
+    params2["password"] = password
+
+    //Requests at (fitfriends, POST, data to go in, JSON format)
+    AF.request(url2, method: .post, parameters: params2, encoding: JSONEncoding.default) .responseJSON
+    { response in
+        //Loads into switch
+        switch response.result {
+        //If succesfully reaches site
+        case .success(_):
+
+            //shortens to data
+            if let data = response.data
+            {
+                //shortens to json
+                if let json = try? JSON(data: data)
+                {
+                    //On success prints corresponding values
+                    if (response.response?.statusCode == 201)
+                    {
+                        //If it reaches this, the user is succesfully signed up
+                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
+                        print(json["message"])
+                        print(json["data"]["username"])
+                        print(json["data"]["email"])
+                        print(json["data"]["password"])
+                        //IMPORTANT we need this for later
+                        token = json["token"].rawString() ?? ""
+
+                        //They should be signed up and sent to login at this point
+                    }
+                    else
+                    {
+                        //prints string attached to message such as user already exists
+                        print(json["error"]["detail"])
+                    }
+                }
+            }
+            break
+        case .failure(_):
+            print("INVALID URL")
+            break
+        }
+    }
+    }
+}
+
+
+
+
+
+
+//else if (isValidUserName(username))
+//{
+//    print("Username must be shorter than 21 characters")
+//}
+//else if (!isValidEmail(email))
+//{
+//    print("Invalid Email")
+//}
+//else if (isValidPassword(password) == 1)
+//{
+//    print("Password must be 6 to 21 inches long")
+//}
+//else if (isValidPassword(password) == 2)
+//{
+//    print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
+//}
+
