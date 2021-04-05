@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Alamofire
 
 struct ContentView: View {
     var body: some View {
@@ -103,8 +104,9 @@ struct mainPage : View {
 struct Login : View {
     
     //variables to hold email and password
-    @State var email = ""
+    @State var user = ""
     @State var pass = ""
+    @State var visible = false;
     
     var body : some View{
         VStack{
@@ -112,11 +114,11 @@ struct Login : View {
             VStack{
                 //horizontal stack holding email address
                 HStack(spacing: 15){
-                    Image(systemName: "envelope")
+                    Image(systemName: "person")
                         .resizable()
                         .frame(width:16, height: 13)
                         .foregroundColor(.black)
-                    TextField("Email Address", text: self.$email)
+                    TextField("Email Address or Username", text: self.$user)
                 }.padding(.vertical, 20)
                 
                 Divider()
@@ -127,11 +129,16 @@ struct Login : View {
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    SecureField("Password", text: self.$pass)
+                    if self.visible{
+                        TextField("Password", text: self.$pass)
+                    } else {
+                        SecureField("Password", text: self.$pass)
+                    }
             
                     Button(action: {
+                        self.visible.toggle()
                     }) {
-                        Image(systemName: "eye")
+                        Image(systemName: self.visible ? "eye" : "eye.slash")
                             .foregroundColor(.black)
                     }
                 }.padding(.vertical, 20)
@@ -148,6 +155,7 @@ struct Login : View {
             
             //button for login
             Button(action: {
+                
             }){
                 Text("LOGIN")
                     .foregroundColor(.white)
@@ -169,11 +177,23 @@ struct SignUp: View {
     @State var email = ""
     @State var pass = ""
     @State var retypePass = ""
+    @State var visible1 = false;
+    @State var visible2 = false;
     
     var body : some View{
         
         VStack{
             VStack{
+                //horizontal stack for email address box
+                HStack(spacing: 15){
+                    Image(systemName: "person")
+                        .resizable()
+                        .frame(width:16, height:13)
+                        .foregroundColor(.black)
+                    TextField("Enter Username", text: self.$email)
+                }.padding(.vertical, 20)
+                
+                Divider()
                 //horizontal stack for email address box
                 HStack(spacing: 15){
                     Image(systemName: "envelope")
@@ -191,10 +211,15 @@ struct SignUp: View {
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    SecureField("Create Password", text: self.$pass)
+                    if self.visible1{
+                        TextField("Password", text: self.$pass)
+                    } else {
+                        SecureField("Password", text: self.$pass)
+                    }
                     Button(action: {
+                        self.visible1.toggle()
                     }) {
-                        Image(systemName: "eye")
+                        Image(systemName: self.visible1 ? "eye" : "eye.slash")
                             .foregroundColor(.black)
                     }
                 }.padding(.vertical, 20)
@@ -207,10 +232,15 @@ struct SignUp: View {
                         .resizable()
                         .frame(width:15, height:18)
                         .foregroundColor(.black)
-                    SecureField("Re-Enter Password", text: self.$retypePass)
+                    if self.visible2{
+                        TextField("Re-Enter Password", text: self.$retypePass)
+                    } else {
+                        SecureField("Re-Enter Password", text: self.$retypePass)
+                    }
                     Button(action: {
+                        self.visible2.toggle()
                     }) {
-                        Image(systemName: "eye")
+                        Image(systemName: self.visible2 ? "eye" : "eye.slash")
                             .foregroundColor(.black)
                     }
                 }.padding(.vertical, 20)
