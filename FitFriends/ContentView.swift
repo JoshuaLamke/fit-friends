@@ -179,7 +179,7 @@ struct Login : View {
             .shadow(radius: 25)
             
             if loading {
-                LoadView(placeHolder: "Logging In", show: $loading)
+                //LoadView(placeHolder: "Logging In", show: $loading)
             }
         }
         .edgesIgnoringSafeArea(.all)
@@ -289,13 +289,23 @@ struct SignUp: View {
             .shadow(radius: 25)
             }
             if self.alert{
-                ViewError(alert: self.$alert, error: self.$error)
+                //ViewError(alert: self.$alert, error: self.$error)
             }
         }
     }
     func checkInputs(){
         if self.user != "" && self.email != "" &&  self.pass != "" && self.retypePass != "" {
-            
+            if(!isValidUserName(self.user)){
+                print("Not valid username")
+            } else if (!isValidEmail(self.email)){
+                print("Not valid email")
+            } else if (isValidPassword(self.pass)==0){
+                print("valid password")
+            } else if (isValidPassword(self.pass)==1){
+                print("Not a valid length for password")
+            } else if(isValidPassword(self.pass)==2){
+                print("password must contain blabla")
+            }
         } else {
             self.error = "Please fill in all blanks in order to register."
             self.alert.toggle()
@@ -303,97 +313,98 @@ struct SignUp: View {
     }
 }
 
-struct ViewError : View {
-    @State var color = Color.black.opacity(0.75)
-    @Binding var alert : Bool
-    @Binding var error : String
-    
-    var body: some View {
-        GeometryReader{_ in
-            VStack {
-                HStack{
-                    Text("Error")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(self.color)
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 25)
-                
-                Text(self.error)
-                    .foregroundColor(self.color)
-                    .padding(.top)
-                    .padding(.horizontal,25)
-                Button(action: {
-                    self.alert.toggle()
-                }) {
-                    Text("Cancel")
-                        .foregroundColor(.white)
-                        .padding(.vertical)
-                        .frame(width: UIScreen.main.bounds.width - 120)
-                }
-                .background(Color("Color"))
-                .cornerRadius(10)
-                .padding(.top, 25)
-            
-            }
-            .padding(.vertical,25)
-            .frame(width: UIScreen.main.bounds.width - 30)
-            .background(Color.white)
-            .cornerRadius(15)
-            
-        }
-        //.frame(width: 100, height: 100)
-        .background(Color.black.opacity(0.20).edgesIgnoringSafeArea(.all))
-    }
-}
+//struct ViewError : View {
+//    @State var color = Color.black.opacity(0.75)
+//    @Binding var alert : Bool
+//    @Binding var error : String
+//
+//    var body: some View {
+//        GeometryReader{_ in
+//            VStack {
+//                HStack{
+//                    Text("Error")
+//                        .font(.title)
+//                        .fontWeight(.bold)
+//                        .foregroundColor(self.color)
+//
+//                    Spacer()
+//                }
+//                .padding(.horizontal, 25)
+//
+//                Text(self.error)
+//                    .foregroundColor(self.color)
+//                    .padding(.top)
+//                    .padding(.horizontal,25)
+//                Button(action: {
+//                    self.alert.toggle()
+//                }) {
+//                    Text("Cancel")
+//                        .foregroundColor(.white)
+//                        .padding(.vertical)
+//                        .frame(width: UIScreen.main.bounds.width - 120)
+//                }
+//                .background(Color("Color"))
+//                .cornerRadius(10)
+//                .padding(.top, 25)
+//
+//            }
+//            .padding(.vertical,25)
+//            .frame(width: UIScreen.main.bounds.width - 30)
+//            .background(Color.white)
+//            .cornerRadius(15)
+//
+//        }
+//        //.frame(width: 100, height: 100)
+//        .background(Color.black.opacity(0.20).edgesIgnoringSafeArea(.all))
+//    }
+//}
 
-struct LoadView : View {
-    var placeHolder : String
-    @Binding var show : Bool
-    @State var animate = false
-    var body : some View {
-        VStack(spacing: 28) {
-            Circle()
-                .stroke(AngularGradient(gradient: .init(colors:[Color.primary,Color.primary.opacity(0)]), center: .center))
-                .frame(width: 80, height: 80)
-                .rotationEffect(.init(degrees: animate ? 360 : 0))
-            Text(placeHolder)
-                .fontWeight(.bold)
-            
-        }
-        .padding(.vertical,25)
-        .padding(.horizontal,35)
-        .background(BlurView())
-        .cornerRadius(20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            Color.primary.opacity(0.35).onTapGesture {
-                withAnimation{
-                    show.toggle()
-                }
-            }
-        )
-        .onAppear{
-            withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)){
-                animate.toggle()
-            }
-            
-        }
-    }
-}
+//struct LoadView : View {
+//    var placeHolder : String
+//    @Binding var show : Bool
+//    @State var animate = false
+//    var body : some View {
+//
+//        VStack(spacing: 28) {
+//            Circle()
+//                .stroke(AngularGradient(gradient: .init(colors:[Color.primary,Color.primary.opacity(0)]), center: .center))
+//                .frame(width: 80, height: 80)
+//                .rotationEffect(.init(degrees: animate ? 360 : 0))
+//            Text(placeHolder)
+//                .fontWeight(.bold)
+//
+//        }
+//        .padding(.vertical,25)
+//        .padding(.horizontal,35)
+//        .background(BlurView())
+//        .cornerRadius(20)
+//        .frame(maxWidth: .infinity, maxHeight: .infinity)
+//        .background(
+//            Color.primary.opacity(0.35).onTapGesture {
+//                withAnimation{
+//                    show.toggle()
+//                }
+//            }
+//        )
+//        .onAppear{
+//            withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)){
+//                animate.toggle()
+//            }
+//
+//        }
+//    }
+//}
 
-struct BlurView: UIViewRepresentable {
-    func makeUIView(context: Context) -> UIVisualEffectView {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
-        return view
-    }
-    
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
-        
-    }
-}
+//struct BlurView: UIViewRepresentable {
+//    func makeUIView(context: Context) -> UIVisualEffectView {
+//        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
+//        return view
+//    }
+//
+//    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+//
+//    }
+//}
 //---------------------------------------------------------------------------
 //Check if username is in right format
 func isValidUserName(_ name: String) -> Bool {
