@@ -172,7 +172,6 @@ struct Login : View {
 //                } else {
 //
 //                }
-                //tryLogin(self.user, self.pass, self.token, <#(String) -> Void#>)
                 myGroup.enter()
                 tryLogin(self.user, self.pass) { response in
                     // Do your stuff here
@@ -217,6 +216,10 @@ struct SignUp: View {
     @State var visible2 = false;
     @State var alert = false
     @State var error = ""
+    @State var message = ""
+    
+    //This is needed to check time on request
+    let myGroup = DispatchGroup()
     
     var body : some View{
         ZStack{
@@ -296,7 +299,28 @@ struct SignUp: View {
             //button for signup
             Button(action: {
                 checkInputs()
-                trySignUp(self.user, self.email, self.pass, self.retypePass)
+                
+                myGroup.enter();
+                
+                trySignUp(self.user, self.email, self.pass, self.retypePass){ response in
+                    // Do your stuff here
+                    self.message = response
+                    myGroup.leave()
+                }
+                
+                //Waits for request to finish
+                myGroup.notify(queue: .main) {
+                    
+                    if (self.message == "success")
+                    {
+                        //Move back to login here
+                    }
+                    else
+                    {
+                        print(message)
+                    }
+                }
+                
             }){
                 Text("SIGNUP")
                     .foregroundColor(.white)
@@ -560,26 +584,13 @@ func tryLogin(_ email: String, _ password: String,_ completion: @escaping (Strin
     }
 }
 
-func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnterPass: String){
+func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnterPass: String, _ completion: @escaping (String) -> Void){
 
     //URL with endpoint to sent to
     let url2 = "https://fit-friends.herokuapp.com/api/user/signup"
     //Parameters to input
     var params2 = ["name": "", "email": "", "password": ""]
 
-
-    //Sample Values these will come from the text field.
-    //NEED TO BE CHANGED
-    //var userNameInput = "Tyler3"
-    //var userEmailInput = "tyl3@gmail.com"
-    //var passWordInput = "abcdefG1"
-
-    //This is important, it identifies the user in the database for when we add stuff later
-
-    //boolean just to turn functions on and off for testing
-    //add these to the if statements if you want to test them one at a time
-    //var testPost = false
-    //var testSign = false
 ////-------------------------------------------------------------------------------
 ////Signup Request
 ////Only runs if the entered name, email, and password are valid
@@ -609,12 +620,14 @@ func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnte
                     //On success prints corresponding values
                     if (response.response?.statusCode == 201)
                     {
-
+                        let message = json["message"].rawString() ?? ""
+                        completion(message)
                     }
                     else
                     {
                         //prints string attached to message such as user already exists
-                        print(json["error"]["detail"])
+                        let message = json["error"]["detail"].rawString() ?? ""
+                        completion(message)
                     }
                 }
             }
