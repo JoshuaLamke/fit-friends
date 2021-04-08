@@ -110,6 +110,10 @@ struct Login : View {
     @State var pass = ""
     @State var visible = false
     @State var loading = false
+    @State var token = ""
+    
+    //This is needed to check time on request
+    let myGroup = DispatchGroup()
     
     var body : some View{
         VStack{
@@ -168,7 +172,20 @@ struct Login : View {
 //                } else {
 //
 //                }
-                tryLogin(self.user, self.pass)
+                //tryLogin(self.user, self.pass, self.token, <#(String) -> Void#>)
+                myGroup.enter()
+                tryLogin(self.user, self.pass) { response in
+                    // Do your stuff here
+                    self.token = "Bearer " + response
+                    myGroup.leave()
+                }
+                
+                //Waits for request to finish
+                myGroup.notify(queue: .main) {
+                    print("token " + token)
+                }
+                
+                
             }){
                 Text("LOGIN")
                     .foregroundColor(.white)
@@ -463,15 +480,16 @@ func isValidPassword(_ password: String) -> Int {
     }
 }
 
-func tryLogin(_ email: String, _ password: String){
+func tryLogin(_ email: String, _ password: String,_ completion: @escaping (String) -> Void){
     //---------------------------------------------------------------------------
     //Login Request
     //Only runs if the entered email and password are valid
-    var url = "https://fit-friends.herokuapp.com/api/user/login"
+    let url = "https://fit-friends.herokuapp.com/api/user/login"
     //Parameters to input
     var params = ["email": "", "password": ""]
 
-
+    var token = ""
+    
     //Sample Values these will come from the text field.
     //NEED TO BE CHANGED
     //var userNameInput = "Tyler3"
@@ -479,12 +497,7 @@ func tryLogin(_ email: String, _ password: String){
     //var passWordInput = "abcdefG1"
 
     //This is important, it identifies the user in the database for when we add stuff later
-    var token = ""
 
-    //boolean just to turn functions on and off for testing
-    //add these to the if statements if you want to test them one at a time
-    var testPost = false
-    var testSign = false
     
     if ( isValidEmail(email) && isValidPassword(password) == 0)
     {
@@ -514,12 +527,9 @@ func tryLogin(_ email: String, _ password: String){
                             //If it reaches this point the user is succesfully logged in
                             //You probably won't need this but its usefull to see if everything is working as it prints in the console
                             print(json["message"])
-                            print(json["data"]["name"])
-                            print(json["data"]["email"])
-                            print(json["data"]["password"])
                             //IMPORTANT identifies user for later use
-                            token = json["token"].rawString() ?? ""
-    
+                            token = json["Token"].rawString() ?? ""
+                            completion(token)
                             //You can send them to the user page at this point
                         }
                         else
@@ -548,13 +558,12 @@ func tryLogin(_ email: String, _ password: String){
     {
         print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
     }
-    
 }
 
 func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnterPass: String){
 
     //URL with endpoint to sent to
-    var url2 = "https://fit-friends.herokuapp.com/api/user/signup"
+    let url2 = "https://fit-friends.herokuapp.com/api/user/signup"
     //Parameters to input
     var params2 = ["name": "", "email": "", "password": ""]
 
@@ -566,7 +575,6 @@ func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnte
     //var passWordInput = "abcdefG1"
 
     //This is important, it identifies the user in the database for when we add stuff later
-    var token = ""
 
     //boolean just to turn functions on and off for testing
     //add these to the if statements if you want to test them one at a time
@@ -586,6 +594,7 @@ func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnte
     //Requests at (fitfriends, POST, data to go in, JSON format)
     AF.request(url2, method: .post, parameters: params2, encoding: JSONEncoding.default) .responseJSON
     { response in
+        print(response.response?.statusCode as Any)
         //Loads into switch
         switch response.result {
         //If succesfully reaches site
@@ -600,16 +609,7 @@ func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnte
                     //On success prints corresponding values
                     if (response.response?.statusCode == 201)
                     {
-                        //If it reaches this, the user is succesfully signed up
-                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
-                        print(json["message"])
-                        print(json["data"]["username"])
-                        print(json["data"]["email"])
-                        print(json["data"]["password"])
-                        //IMPORTANT we need this for later
-                        token = json["token"].rawString() ?? ""
 
-                        //They should be signed up and sent to login at this point
                     }
                     else
                     {
