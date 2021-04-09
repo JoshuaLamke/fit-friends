@@ -10,23 +10,10 @@ import Alamofire
 import SwiftyJSON
 import Foundation
 
+
 struct ContentView: View {
     var body: some View {
-        ZStack{
-            //assign color gradient to background
-            LinearGradient(gradient: .init(colors: [Color("Color"),Color("Color2"),Color("Color3")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
-            //fill up display if height > 800
-            if UIScreen.main.bounds.height > 800 {
-                mainPage()
-            }
-            else {
-                //create a scroll view of display
-                ScrollView(.vertical, showsIndicators: false){
-                    mainPage()
-                }
-            }
-            
-        }
+        Home()
     }
 }
 
@@ -36,12 +23,248 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-struct mainPage : View {
-    //variable to hold state of existing or new
-    @State var index = 0;
-    
+struct Home : View {
+    @State var show = false;
+    @State var userPage = false;
+    init(){
+        UINavigationBar.setAnimationsEnabled(false)
+    }
+    var body: some View {
+        NavigationView {
+            ZStack {
+              NavigationLink(
+                destination: SignUp(show: self.$show)
+                    .navigationBarTitle("")
+                    .navigationBarHidden(true)
+                ,
+                isActive: self.$show){
+                    Text("")
+                }
+              .hidden()
+                Login(show: self.$show)
+            }
+            .navigationBarTitle("")
+            .navigationBarHidden(true)
+            .navigationBarBackButtonHidden(true)
+        }
+    }
+}
+
+struct Login : View {
+    @State var color = Color.black.opacity(0.7)
+    @State var user = ""
+    @State var pass = ""
+    @State var visible = false
+    @Binding var show : Bool
+    @State var alert = false
+    @State var error = ""
+    @State var loading = false
+    @State var token : String = ""
+    let myGroup = DispatchGroup()
+//
+//
     var body :some View{
-        VStack {
+        ZStack {
+            LinearGradient(gradient: .init(colors: [Color("Color"),Color("Color2"),Color("Color3")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
+            VStack {
+            //FitFriends logo
+                Image("Logo")
+                    .resizable()
+                    .frame(width: 200, height:180)
+                
+                //horizontal stack holding and new buttons
+                HStack{
+                    
+                    //existing button
+                    Button(action: {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
+                            self.show.toggle()
+                        }
+                        
+                    }) {
+                        Text("Existing")
+                            .foregroundColor(!self.show ? .black : .white)
+                            .fontWeight(.bold)
+                            .padding(.vertical,10)
+                            .frame(width: (UIScreen.main.bounds.width - 50)/2)
+                        
+                    }.background(!self.show ? Color.white: Color.clear)
+                    .clipShape(Capsule())
+                    
+                    //new button
+                    Button(action: {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
+                            self.show.toggle()
+                        }
+                        
+                    }) {
+                        Text("New")
+                            .foregroundColor(self.show ? .black : .white)
+                            .fontWeight(.bold)
+                            .padding(.vertical,10)
+                            .frame(width: (UIScreen.main.bounds.width - 50)/2)
+                        
+                    }.background(self.show ? Color.white: Color.clear)
+                    .clipShape(Capsule())
+                }
+                .background(Color.black.opacity(0.1))
+                .clipShape(Capsule())
+                .padding(.top, 25)
+                VStack{
+                    //vertical stack holding all inputs
+                    VStack{
+                        //horizontal stack holding email address
+                        HStack(spacing: 15){
+                            Image(systemName: "envelope")
+                                .resizable()
+                                .frame(width:16, height: 13)
+                                .foregroundColor(.black)
+                            TextField("Email Address", text: self.$user)
+                        }.padding(.vertical, 20)
+                        
+                        Divider()
+                        
+                        //horizontal stack holding password
+                        HStack(spacing: 15){
+                            Image(systemName: "lock")
+                                .resizable()
+                                .frame(width:15, height:18)
+                                .foregroundColor(.black)
+                            if self.visible{
+                                TextField("Password", text: self.$pass).autocapitalization(.none)
+                            } else {
+                                SecureField("Password", text: self.$pass)
+                            }
+                            
+                            Button(action: {
+                                self.visible.toggle()
+                            }) {
+                                Image(systemName: self.visible ? "eye" : "eye.slash")
+                                    .foregroundColor(.black)
+                            }
+                        }.padding(.vertical, 20)
+                        
+                        Divider()
+                    }
+                    //add padding around vertical stack holding email and password
+                    .padding(.vertical)
+                    .padding(.horizontal,20)
+                    .padding(.bottom,40)
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .padding(.top,25)
+                    
+                    //button for login
+                    Button(action: {
+                        checkInputs()
+                        myGroup.enter()
+                         tryLogin(user, pass) { response in
+                             // Do your stuff here
+                            //self.token = "Bearer " + response
+                            self.token = response
+                             myGroup.leave()
+                         }
+                         
+                         //Waits for request to finish
+                        myGroup.notify(queue: .main) {
+                            //print(token)
+                            if token.contains("Success"){
+                                print(token)
+                                withAnimation{
+                                    loading.toggle()
+                                }
+                            } else {
+                                self.error = "Email or password is incorrect."
+                                self.alert.toggle()
+                            }
+                         }
+                        //print(token)
+//                        self.loading.toggle()
+//                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+//                            self.show.toggle()
+//                        }
+//                        if !self.alert{
+//                            withAnimation{
+//                                loading.toggle()
+//                            }
+//                        }
+//                        myGroup.notify(queue: .main) {
+//                           if(token == nil) {
+//                               self.error = "Email or password is incorrect."
+//                               self.alert.toggle()
+//                           } else {
+//                               print(token)
+//                               withAnimation{
+//                                   loading.toggle()
+//                               }
+//                               DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+//                                   self.show.toggle()
+//                               }
+//                           }
+//                        }
+                    }){
+                        Text("LOGIN")
+                            .foregroundColor(.white)
+                            .fontWeight(.bold)
+                            .padding(.vertical)
+                            .frame(width: UIScreen.main.bounds.width - 100)
+                    }.background(Color.init("Color"))
+                    .cornerRadius(8)
+                    .offset(y: -40)
+                    .padding(.bottom,-40)
+                    .shadow(radius: 25)
+                    
+                    
+                    
+                }
+                .edgesIgnoringSafeArea(.all)
+            }
+            .padding()
+            if self.alert{
+                ViewError(alert: self.$alert, error: self.$error)
+            }
+            if loading {
+                LoadView(placeHolder: "Logging in..", show: $loading)
+            }
+            
+        }
+        
+    }
+    
+    func checkInputs(){
+        if self.user != "" &&  self.pass != "" {
+            if (!isValidEmail(self.user)){
+                self.error = "Not a valid email address."
+                self.alert.toggle()
+            }
+        } else {
+            self.error = "Please fill in all blanks in order to register."
+            self.alert.toggle()
+        }
+    }
+
+}
+
+struct SignUp : View {
+    @State var color = Color.black.opacity(0.7)
+    @State var user = ""
+    @State var pass = ""
+    @State var email = ""
+    @State var retypePass = ""
+    @State var visible1 = false
+    @State var visible2 = false
+    @Binding var show : Bool
+    @State var alert = false
+    @State var error = ""
+    @State var loading = false
+    let myGroup = DispatchGroup()
+    @State var message = ""
+//
+//
+    var body :some View{
+        ZStack {
+            LinearGradient(gradient: .init(colors: [Color("Color"),Color("Color2"),Color("Color3")]), startPoint: .top, endPoint: .bottom).edgesIgnoringSafeArea(.all)
+            VStack {
             //FitFriends logo
             Image("Logo")
                 .resizable()
@@ -53,262 +276,184 @@ struct mainPage : View {
                 //existing button
                 Button(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
-                    self.index = 0
+                        self.show.toggle()
                     }
 
                 }) {
                     Text("Existing")
-                        .foregroundColor(self.index == 0 ? .black : .white)
+                        .foregroundColor(!self.show ? .black : .white)
                         .fontWeight(.bold)
                         .padding(.vertical,10)
                         .frame(width: (UIScreen.main.bounds.width - 50)/2)
                     
-                }.background(self.index == 0 ? Color.white: Color.clear)
+                }.background(!self.show ? Color.white: Color.clear)
                 .clipShape(Capsule())
                 
                 //new button
                 Button(action: {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0.5)){
-                    self.index = 1
+                        self.show.toggle()
                     }
                     
                 }) {
                     Text("New")
-                        .foregroundColor(self.index == 1 ? .black : .white)
+                        .foregroundColor(self.show ? .black : .white)
                         .fontWeight(.bold)
                         .padding(.vertical,10)
                         .frame(width: (UIScreen.main.bounds.width - 50)/2)
                     
-                }.background(self.index == 1 ? Color.white: Color.clear)
+                }.background(self.show ? Color.white: Color.clear)
                 .clipShape(Capsule())
             }
             .background(Color.black.opacity(0.1))
             .clipShape(Capsule())
             .padding(.top, 25)
-            
-            //if index == 0 then the login page is currently viewed, therefore display forgot password button. Else if index == 1 then the register page is currently viewed, therefore forgot password button isn't needed.
-            if self.index == 0{
-                Login()
-                Button(action: {
-                }) {
-                    Text("Forgot Password?")
-                        .foregroundColor(.white)
-                }
-                .padding(.top,20)
-            } else {
-                SignUp()
-            }
-        }
-        .padding()
-    }
-}
-
-struct Login : View {
-    
-    //variables to hold email and password
-    @State var user = ""
-    @State var pass = ""
-    @State var visible = false
-    @State var loading = false
-    
-    var body : some View{
-        VStack{
-            //vertical stack holding all inputs
-            VStack{
-                //horizontal stack holding email address
-                HStack(spacing: 15){
-                    Image(systemName: "person")
-                        .resizable()
-                        .frame(width:16, height: 13)
-                        .foregroundColor(.black)
-                    TextField("Email Address or Username", text: self.$user)
-                }.padding(.vertical, 20)
-                
-                Divider()
-                
-                //horizontal stack holding password
-                HStack(spacing: 15){
-                    Image(systemName: "lock")
-                        .resizable()
-                        .frame(width:15, height:18)
-                        .foregroundColor(.black)
-                    if self.visible{
-                        TextField("Password", text: self.$pass)
-                    } else {
-                        SecureField("Password", text: self.$pass)
+                    //vertical stack holding all inputs
+                    VStack{
+                        //horizontal stack holding email address
+                        //horizontal stack for email address box
+                        HStack(spacing: 15){
+                            Image(systemName: "person")
+                                .resizable()
+                                .frame(width:16, height:13)
+                                .foregroundColor(.black)
+                            TextField("Enter Username", text: self.$user)
+                        }.padding(.vertical, 10)
+                        
+                        Divider()
+                        //horizontal stack for email address box
+                        HStack(spacing: 15){
+                            Image(systemName: "envelope")
+                                .resizable()
+                                .frame(width:16, height:13)
+                                .foregroundColor(.black)
+                            TextField("Enter Email Address", text: self.$email)
+                        }.padding(.vertical, 10)
+                        
+                        Divider()
+                        
+                        //horizontal stack for password box
+                        HStack(spacing: 15){
+                            Image(systemName: "lock")
+                                .resizable()
+                                .frame(width:15, height:18)
+                                .foregroundColor(.black)
+                            if self.visible1{
+                                TextField("Password", text: self.$pass).autocapitalization(.none)
+                            } else {
+                                SecureField("Password", text: self.$pass)
+                            }
+                            Button(action: {
+                                self.visible1.toggle()
+                            }) {
+                                Image(systemName: self.visible1 ? "eye" : "eye.slash")
+                                    .foregroundColor(.black)
+                            }
+                        }.padding(.vertical, 10)
+                        
+                        Divider()
+                        
+                        //horizontal stack for re-enter password box
+                        HStack(spacing: 15){
+                            Image(systemName: "lock")
+                                .resizable()
+                                .frame(width:15, height:18)
+                                .foregroundColor(.black)
+                            if self.visible2{
+                                TextField("Re-Enter Password", text: self.$retypePass).autocapitalization(.none)
+                            } else {
+                                SecureField("Re-Enter Password", text: self.$retypePass)
+                            }
+                            Button(action: {
+                                self.visible2.toggle()
+                            }) {
+                                Image(systemName: self.visible2 ? "eye" : "eye.slash")
+                                    .foregroundColor(.black)
+                            }
+                        }.padding(.vertical, 10)
+                        
+                        Divider()
                     }
-            
-                    Button(action: {
-                        self.visible.toggle()
-                    }) {
-                        Image(systemName: self.visible ? "eye" : "eye.slash")
-                            .foregroundColor(.black)
-                    }
-                }.padding(.vertical, 20)
-                
-                Divider()
-            }
-            //add padding around vertical stack holding email and password
-            .padding(.vertical)
-            .padding(.horizontal,20)
-            .padding(.bottom,40)
-            .background(Color.white)
-            .cornerRadius(10)
-            .padding(.top,25)
-            
-            //button for login
-            Button(action: {
-//                if user != "" && pass != "" {
-//                    if(!isValidUserName(user)){
-//                        print("is not a valid username")
-//                    }
-//                    withAnimation{
-//                        loading.toggle()
-//                    }
-//                } else {
-//
-//                }
-                tryLogin(self.user, self.pass)
-            }){
-                Text("LOGIN")
-                    .foregroundColor(.white)
-                    .fontWeight(.bold)
+                    //add padding vertical stack holding email,pass,re-enter
                     .padding(.vertical)
-                    .frame(width: UIScreen.main.bounds.width - 100)
-            }.background(Color.init("Color"))
-            .cornerRadius(8)
-            .offset(y: -40)
-            .padding(.bottom,-40)
-            .shadow(radius: 25)
-            
-            if loading {
-                //LoadView(placeHolder: "Logging In", show: $loading)
-            }
-        }
-        .edgesIgnoringSafeArea(.all)
-    }
-}
+                    .padding(.horizontal,20)
+                    .padding(.bottom,40)
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .padding(.top,25)
+                    
+                    //button for signup
+                    Button(action: {
+                        checkInputs()
+                        myGroup.enter();
+                        
+                        trySignUp(self.user, self.email, self.pass, self.retypePass){ response in
+                            // Do your stuff here
+                            self.message = response
+                            myGroup.leave()
+                        }
+                        
+                        //Waits for request to finish
+                        myGroup.notify(queue: .main) {
+                            
+                            if (self.message == "success")
+                            {
+                                withAnimation {
+                                    self.loading.toggle()
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        self.show.toggle()
+                                    }
+                                    //self.show.toggle()
+                                }//Move back to login here
+                            }
+                            else
+                            {
+                                self.error = "User already exists with this email."
+                                self.alert.toggle()
+                            }
+                        }
 
-struct SignUp: View {
-    
-    //variables to hold email,pass,retype
-    @State var user = ""
-    @State var email = ""
-    @State var pass = ""
-    @State var retypePass = ""
-    @State var visible1 = false;
-    @State var visible2 = false;
-    @State var alert = false
-    @State var error = ""
-    
-    var body : some View{
-        ZStack{
-            VStack{
-                VStack{
-                //horizontal stack for email address box
-                HStack(spacing: 15){
-                    Image(systemName: "person")
-                        .resizable()
-                        .frame(width:16, height:13)
-                        .foregroundColor(.black)
-                    TextField("Enter Username", text: self.$user)
-                }.padding(.vertical, 10)
-                
-                Divider()
-                //horizontal stack for email address box
-                HStack(spacing: 15){
-                    Image(systemName: "envelope")
-                        .resizable()
-                        .frame(width:16, height:13)
-                        .foregroundColor(.black)
-                    TextField("Enter Email Address", text: self.$email)
-                }.padding(.vertical, 10)
-                
-                Divider()
-                
-                //horizontal stack for password box
-                HStack(spacing: 15){
-                    Image(systemName: "lock")
-                        .resizable()
-                        .frame(width:15, height:18)
-                        .foregroundColor(.black)
-                    if self.visible1{
-                        TextField("Password", text: self.$pass)
-                    } else {
-                        SecureField("Password", text: self.$pass)
-                    }
-                    Button(action: {
-                        self.visible1.toggle()
-                    }) {
-                        Image(systemName: self.visible1 ? "eye" : "eye.slash")
-                            .foregroundColor(.black)
-                    }
-                }.padding(.vertical, 10)
-                
-                Divider()
-                
-                //horizontal stack for re-enter password box
-                HStack(spacing: 15){
-                    Image(systemName: "lock")
-                        .resizable()
-                        .frame(width:15, height:18)
-                        .foregroundColor(.black)
-                    if self.visible2{
-                        TextField("Re-Enter Password", text: self.$retypePass)
-                    } else {
-                        SecureField("Re-Enter Password", text: self.$retypePass)
-                    }
-                    Button(action: {
-                        self.visible2.toggle()
-                    }) {
-                        Image(systemName: self.visible2 ? "eye" : "eye.slash")
-                            .foregroundColor(.black)
-                    }
-                }.padding(.vertical, 10)
-                
-                Divider()
+                    }){
+                        Text("SIGNUP")
+                            .foregroundColor(.white)
+                            .fontWeight(.bold)
+                            .padding(.vertical)
+                            .frame(width: UIScreen.main.bounds.width - 100)
+                    }.background(Color.init("Color"))
+                    .cornerRadius(8)
+                    .offset(y: -40)
+                    .padding(.bottom,-40)
+                    .shadow(radius: 25)
+
+
             }
-            //add padding vertical stack holding email,pass,re-enter
-            .padding(.vertical)
-            .padding(.horizontal,20)
-            .padding(.bottom,40)
-            .background(Color.white)
-            .cornerRadius(10)
-            .padding(.top,25)
-            
-            //button for signup
-            Button(action: {
-                checkInputs()
-                trySignUp(self.user, self.email, self.pass, self.retypePass)
-            }){
-                Text("SIGNUP")
-                    .foregroundColor(.white)
-                    .fontWeight(.bold)
-                    .padding(.vertical)
-                    .frame(width: UIScreen.main.bounds.width - 100)
-            }.background(Color.init("Color"))
-            .cornerRadius(8)
-            .offset(y: -40)
-            .padding(.bottom,-40)
-            .shadow(radius: 25)
-            }
+            .padding()
             if self.alert{
-                //ViewError(alert: self.$alert, error: self.$error)
+                ViewError(alert: self.$alert, error: self.$error)
+            }
+            if loading {
+                LoadView(placeHolder: "Registering..", show: $loading)
             }
         }
+        
     }
     func checkInputs(){
         if self.user != "" && self.email != "" &&  self.pass != "" && self.retypePass != "" {
             if(!isValidUserName(self.user)){
-                print("Not valid username")
+                self.error = "Usernames must be less than 21 characters."
+                self.alert.toggle()
             } else if (!isValidEmail(self.email)){
-                print("Not valid email")
-            } else if (isValidPassword(self.pass)==0){
-                print("valid password")
+                self.error = "Not a valid email address."
+                self.alert.toggle()
             } else if (isValidPassword(self.pass)==1){
-                print("Not a valid length for password")
+                self.error = "Passwords must contain 6 - 21 characters."
+                self.alert.toggle()
             } else if(isValidPassword(self.pass)==2){
-                print("password must contain blabla")
+                self.error = "Passwords must contain 1 capital letter and 1 number."
+                self.alert.toggle()
+            } else if(self.retypePass != self.pass){
+                self.error = "Passwords do not match."
+                self.alert.toggle()
             }
         } else {
             self.error = "Please fill in all blanks in order to register."
@@ -317,100 +462,101 @@ struct SignUp: View {
     }
 }
 
-//struct ViewError : View {
-//    @State var color = Color.black.opacity(0.75)
-//    @Binding var alert : Bool
-//    @Binding var error : String
-//
-//    var body: some View {
-//        GeometryReader{_ in
-//            VStack {
-//                HStack{
-//                    Text("Error")
-//                        .font(.title)
-//                        .fontWeight(.bold)
-//                        .foregroundColor(self.color)
-//
-//                    Spacer()
-//                }
-//                .padding(.horizontal, 25)
-//
-//                Text(self.error)
-//                    .foregroundColor(self.color)
-//                    .padding(.top)
-//                    .padding(.horizontal,25)
-//                Button(action: {
-//                    self.alert.toggle()
-//                }) {
-//                    Text("Cancel")
-//                        .foregroundColor(.white)
-//                        .padding(.vertical)
-//                        .frame(width: UIScreen.main.bounds.width - 120)
-//                }
-//                .background(Color("Color"))
-//                .cornerRadius(10)
-//                .padding(.top, 25)
-//
-//            }
-//            .padding(.vertical,25)
-//            .frame(width: UIScreen.main.bounds.width - 30)
-//            .background(Color.white)
-//            .cornerRadius(15)
-//
-//        }
-//        //.frame(width: 100, height: 100)
-//        .background(Color.black.opacity(0.20).edgesIgnoringSafeArea(.all))
-//    }
-//}
+struct ViewError : View {
+    @State var color = Color.black.opacity(0.75)
+    @Binding var alert : Bool
+    @Binding var error : String
 
-//struct LoadView : View {
-//    var placeHolder : String
-//    @Binding var show : Bool
-//    @State var animate = false
-//    var body : some View {
-//
-//        VStack(spacing: 28) {
-//            Circle()
-//                .stroke(AngularGradient(gradient: .init(colors:[Color.primary,Color.primary.opacity(0)]), center: .center))
-//                .frame(width: 80, height: 80)
-//                .rotationEffect(.init(degrees: animate ? 360 : 0))
-//            Text(placeHolder)
-//                .fontWeight(.bold)
-//
-//        }
-//        .padding(.vertical,25)
-//        .padding(.horizontal,35)
-//        .background(BlurView())
-//        .cornerRadius(20)
-//        .frame(maxWidth: .infinity, maxHeight: .infinity)
-//        .background(
-//            Color.primary.opacity(0.35).onTapGesture {
-//                withAnimation{
-//                    show.toggle()
-//                }
-//            }
-//        )
-//        .onAppear{
-//            withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)){
-//                animate.toggle()
-//            }
-//
-//        }
-//    }
-//}
+    var body: some View {
+        VStack{
+            VStack {
+                HStack{
+                    Text("Error")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(self.color)
 
-//struct BlurView: UIViewRepresentable {
-//    func makeUIView(context: Context) -> UIVisualEffectView {
-//        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
-//        return view
-//    }
-//
-//    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
-//
-//    }
-//}
-//---------------------------------------------------------------------------
-//Check if username is in right format
+                    Spacer()
+                }
+                .padding(.horizontal, 25)
+
+                Text(self.error)
+                    .foregroundColor(self.color)
+                    .padding(.top)
+                    .padding(.horizontal,25)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(action: {
+                    self.alert.toggle()
+                }) {
+                    Text("Cancel")
+                        .foregroundColor(.white)
+                        .padding(.vertical)
+                        .frame(width: UIScreen.main.bounds.width - 120)
+                }
+                .background(Color("Color"))
+                .cornerRadius(10)
+                .padding(.top, 25)
+
+            }
+            .padding(.vertical,25)
+            .frame(width: UIScreen.main.bounds.width - 30,height: UIScreen.main.bounds.height / 4)
+            .background(Color.white)
+            .cornerRadius(15)
+            
+
+        }
+        .frame(maxWidth: .infinity,maxHeight: .infinity)
+        .background(Color.black.opacity(0.35).edgesIgnoringSafeArea(.all))
+    }
+}
+
+struct LoadView : View {
+    var placeHolder : String
+    @Binding var show : Bool
+    @State var animate = false
+    var body : some View {
+
+        VStack(spacing: 28) {
+            Circle()
+                .stroke(AngularGradient(gradient: .init(colors:[Color.primary,Color.primary.opacity(0)]), center: .center))
+                .frame(width: 80, height: 80)
+                .rotationEffect(.init(degrees: animate ? 360 : 0))
+            Text(placeHolder)
+                .fontWeight(.bold)
+
+        }
+        .padding(.vertical,25)
+        .padding(.horizontal,35)
+        .background(BlurView())
+        .cornerRadius(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            Color.primary.opacity(0.35).onTapGesture {
+                withAnimation{
+                    show.toggle()
+                }
+            }.edgesIgnoringSafeArea(.all)
+        )
+        .onAppear{
+            withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)){
+                animate.toggle()
+            }
+
+        }
+    }
+}
+
+struct BlurView: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
+        return view
+    }
+
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+
+    }
+}
+
 func isValidUserName(_ name: String) -> Bool {
     if (name.count <= 21)
     {
@@ -463,28 +609,16 @@ func isValidPassword(_ password: String) -> Int {
     }
 }
 
-func tryLogin(_ email: String, _ password: String){
+func tryLogin(_ email: String, _ password: String,_ completion: @escaping (String) -> Void){
     //---------------------------------------------------------------------------
     //Login Request
     //Only runs if the entered email and password are valid
-    var url = "https://fit-friends.herokuapp.com/api/user/login"
+    let url = "https://fit-friends.herokuapp.com/api/user/login"
     //Parameters to input
     var params = ["email": "", "password": ""]
 
-
-    //Sample Values these will come from the text field.
-    //NEED TO BE CHANGED
-    //var userNameInput = "Tyler3"
-    //var userEmailInput = "tyl3@gmail.com"
-    //var passWordInput = "abcdefG1"
-
-    //This is important, it identifies the user in the database for when we add stuff later
     var token = ""
 
-    //boolean just to turn functions on and off for testing
-    //add these to the if statements if you want to test them one at a time
-    var testPost = false
-    var testSign = false
     
     if ( isValidEmail(email) && isValidPassword(password) == 0)
     {
@@ -513,13 +647,11 @@ func tryLogin(_ email: String, _ password: String){
                         {
                             //If it reaches this point the user is succesfully logged in
                             //You probably won't need this but its usefull to see if everything is working as it prints in the console
-                            print(json["message"])
-                            print(json["data"]["name"])
-                            print(json["data"]["email"])
-                            print(json["data"]["password"])
+                            //print(json["message"])
                             //IMPORTANT identifies user for later use
-                            token = json["token"].rawString() ?? ""
-    
+                            //token = json["Token"].rawString() ?? ""
+                            token = json["message"].string ?? ""
+                            completion(token)
                             //You can send them to the user page at this point
                         }
                         else
@@ -536,42 +668,15 @@ func tryLogin(_ email: String, _ password: String){
             }
         }
     }
-    else if (!isValidEmail(email))
-    {
-        print("Invalid Email")
-    }
-    else if (isValidPassword(password) == 1)
-    {
-        print("Password must be 6 to 21 inches long")
-    }
-    else if (isValidPassword(password) == 2)
-    {
-        print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
-    }
-    
 }
 
-func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnterPass: String){
+func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnterPass: String, _ completion: @escaping (String) -> Void){
 
     //URL with endpoint to sent to
-    var url2 = "https://fit-friends.herokuapp.com/api/user/signup"
+    let url2 = "https://fit-friends.herokuapp.com/api/user/signup"
     //Parameters to input
     var params2 = ["name": "", "email": "", "password": ""]
 
-
-    //Sample Values these will come from the text field.
-    //NEED TO BE CHANGED
-    //var userNameInput = "Tyler3"
-    //var userEmailInput = "tyl3@gmail.com"
-    //var passWordInput = "abcdefG1"
-
-    //This is important, it identifies the user in the database for when we add stuff later
-    var token = ""
-
-    //boolean just to turn functions on and off for testing
-    //add these to the if statements if you want to test them one at a time
-    //var testPost = false
-    //var testSign = false
 ////-------------------------------------------------------------------------------
 ////Signup Request
 ////Only runs if the entered name, email, and password are valid
@@ -586,6 +691,7 @@ func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnte
     //Requests at (fitfriends, POST, data to go in, JSON format)
     AF.request(url2, method: .post, parameters: params2, encoding: JSONEncoding.default) .responseJSON
     { response in
+        print(response.response?.statusCode as Any)
         //Loads into switch
         switch response.result {
         //If succesfully reaches site
@@ -600,21 +706,14 @@ func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnte
                     //On success prints corresponding values
                     if (response.response?.statusCode == 201)
                     {
-                        //If it reaches this, the user is succesfully signed up
-                        //You probably won't need this but its usefull to see if everything is working as it prints in the console
-                        print(json["message"])
-                        print(json["data"]["username"])
-                        print(json["data"]["email"])
-                        print(json["data"]["password"])
-                        //IMPORTANT we need this for later
-                        token = json["token"].rawString() ?? ""
-
-                        //They should be signed up and sent to login at this point
+                        let message = json["message"].rawString() ?? ""
+                        completion(message)
                     }
                     else
                     {
                         //prints string attached to message such as user already exists
-                        print(json["error"]["detail"])
+                        let message = json["error"]["detail"].rawString() ?? ""
+                        completion(message)
                     }
                 }
             }
@@ -627,25 +726,4 @@ func trySignUp(_ username: String, _ email: String, _ password: String, _ reEnte
     }
 }
 
-
-
-
-
-
-//else if (isValidUserName(username))
-//{
-//    print("Username must be shorter than 21 characters")
-//}
-//else if (!isValidEmail(email))
-//{
-//    print("Invalid Email")
-//}
-//else if (isValidPassword(password) == 1)
-//{
-//    print("Password must be 6 to 21 inches long")
-//}
-//else if (isValidPassword(password) == 2)
-//{
-//    print("Password must include a atleast 1 uppercase letter, lowercase letter, and a number")
-//}
 
